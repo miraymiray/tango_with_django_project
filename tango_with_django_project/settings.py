@@ -122,3 +122,10 @@ STATICFILES_DIRS = [STATIC_DIR, ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_ROOT = MEDIA_DIR
 MEDIA_URL = '/media/'
+
+# Redirects after login/logout
+LOGIN_REDIRECT_URL = 'index'  # Redirect to the homepage after login
+LOGOUT_REDIRECT_URL = 'index'  # Redirect to the homepage after logout
+
+# Custom login URL (ensures users are redirected here when authentication is required)
+LOGIN_URL = 'login'
