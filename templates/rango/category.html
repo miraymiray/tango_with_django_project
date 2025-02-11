@@ -24,10 +24,11 @@
         {% endif %}
     </div>
 
-    <!-- Ensure the homepage link is inside the main div -->
+    <!-- Well-formed homepage link -->
     <div>
-        <a href="{% url 'index' %}">Return to Index</a>
+        <a href="{% url "rango:index" %}">Home</a>
     </div>
+
 
 </body>
 </html>
