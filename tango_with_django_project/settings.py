@@ -99,6 +99,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+{
+        'NAME': 'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    },
+    {
+        'NAME': 'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    },
 ]
 
 # Internationalization
@@ -123,9 +129,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_ROOT = MEDIA_DIR
 MEDIA_URL = '/media/'
 
-# Redirects after login/logout
-LOGIN_REDIRECT_URL = 'index'  # Redirect to the homepage after login
-LOGOUT_REDIRECT_URL = 'index'  # Redirect to the homepage after logout
+LOGIN_REDIRECT_URL = 'index'
+LOGOUT_REDIRECT_URL = 'index'
 
-# Custom login URL (ensures users are redirected here when authentication is required)
-LOGIN_URL = 'login'
+LOGIN_URL = 'rango:login'
+
+PASSWORD_HASHERS = [
+'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+'django.contrib.auth.hashers.BCryptPasswordHasher',
+'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+]

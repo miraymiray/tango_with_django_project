@@ -2,7 +2,10 @@ from django.http import HttpResponse
 from rango.models import Category, Page
 from rango.forms import CategoryForm, PageForm
 from django.urls import reverse
-from django.shortcuts import redirect, render
+from rango.forms import UserForm, UserProfileForm
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate, logout
 
 def index(request):
     category_list = Category.objects.order_by('-likes')[:5]  # Top 5 most liked categories
@@ -20,62 +23,47 @@ def about(request):
     return render(request, 'rango/about.html')
 
 def show_category(request, category_name_slug):
-    # Create a context dictionary to pass to the template
-    context_dict = {}
-
     try:
-        # Try to get the category with the given slug
         category = Category.objects.get(slug=category_name_slug)
-
-        # Retrieve associated pages
         pages = Page.objects.filter(category=category)
 
-        # Add retrieved data to the context dictionary
-        context_dict['pages'] = pages
-        context_dict['category'] = category
+        # Increase category view count on every visit
+        category.views += 1
+        category.save()
+
+        context_dict = {'category': category, 'pages': pages}
 
     except Category.DoesNotExist:
-        # If category doesn't exist, set values to None
-        context_dict['category'] = None
-        context_dict['pages'] = None
+        context_dict = {'category': None, 'pages': None}
 
-    # Render and return response
     return render(request, 'rango/category.html', context=context_dict)
 
+from django.contrib.auth.decorators import login_required
+
+@login_required
 def add_category(request):
     form = CategoryForm()
 
-    # A HTTP POST?
     if request.method == 'POST':
         form = CategoryForm(request.POST)
 
-        # Have we been provided with a valid form?
         if form.is_valid():
-            # Save the new category to the database.
             form.save(commit=True)
-
-            # Redirect the user back to the index view.
-            return redirect('/rango/')
+            return redirect('rango:index')
         else:
-            # The supplied form contained errors - just print them to the terminal.
             print(form.errors)
 
-    # Will handle the bad form, new form, or no form supplied cases.
-    # Render the form with error messages (if any).
     return render(request, 'rango/add_category.html', {'form': form})
 
+@login_required
 def add_page(request, category_name_slug):
-    """
-    Handles adding a new page to a specific category.
-    """
     try:
         category = Category.objects.get(slug=category_name_slug)
     except Category.DoesNotExist:
         category = None
 
-    # If category does not exist, redirect to the homepage
     if category is None:
-        return redirect('/rango/')
+        return redirect('rango:index')
 
     form = PageForm()
 
@@ -91,5 +79,69 @@ def add_page(request, category_name_slug):
         else:
             print(form.errors)
 
-    context_dict = {'form': form, 'category': category}
-    return render(request, 'rango/add_page.html', context=context_dict)
+    return render(request, 'rango/add_page.html', {'form': form, 'category': category})
+
+def register(request):
+    registered = False
+    categories = Category.objects.all()  # Fetch categories
+
+    if request.method == 'POST':
+        user_form = UserForm(request.POST)
+        profile_form = UserProfileForm(request.POST, request.FILES)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user = user_form.save()
+            user.set_password(user.password)  # Hash password
+            user.save()
+
+            profile = profile_form.save(commit=False)
+            profile.user = user
+            if 'picture' in request.FILES:
+                profile.picture = request.FILES['picture']
+            profile.save()
+
+            registered = True
+        else:
+            print(user_form.errors, profile_form.errors)  # Debugging errors
+
+    else:
+        user_form = UserForm()
+        profile_form = UserProfileForm()
+
+    return render(request, 'rango/register.html', {
+        'user_form': user_form,
+        'profile_form': profile_form,
+        'registered': registered,
+        #'categories': categories,  # Pass categories to template
+    })
+
+def user_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(username=username, password=password)
+
+        if user:
+            if user.is_active:
+                login(request, user)
+                return redirect(reverse('rango:index'))
+            else:
+                return HttpResponse("Your Rango account is disabled.")
+        else:
+            print(f"Invalid login details: {username}, {password}")
+            return HttpResponse("Invalid login details supplied.")
+    else:
+        return render(request, 'rango/login.html')
+
+@login_required
+def restricted(request):
+    return render(request, 'rango/restricted.html')
+
+@login_required
+def user_logout(request):
+    logout(request)
+    return redirect(reverse('rango:index'))
+
+@login_required
+def restricted_view(request):
+    return render(request, 'rango/restricted.html')
