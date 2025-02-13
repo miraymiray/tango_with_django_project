@@ -1,24 +1,35 @@
 {% extends 'rango/base.html' %}
 
 {% block title_block %}
-    Welcome to Rango!
+Index
 {% endblock %}
 
 {% block body_block %}
     <h1>Rango says...</h1>
+    <div>
+        <strong>{{ boldmessage }}</strong>
+    </div>
 
     {% if user.is_authenticated %}
-        <p>howdy {{ user.username }}!</p>
+        <p>Howdy, {{ user.username }}!</p>
     {% else %}
-        <p>hey there partner!</p>
+        <p>Hey there partner!</p>
     {% endif %}
 
-    <strong>{{ boldmessage }}</strong>
-
-    <p>Here are the most liked categories:</p>
+    <h2>Top Categories</h2>
     <ul>
         {% for category in categories %}
             <li><a href="{% url 'rango:show_category' category.slug %}">{{ category.name }}</a></li>
         {% endfor %}
     </ul>
+
+    <h2>Top Pages</h2>
+    <ul>
+        {% for page in pages %}
+            <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <p><a href="{% url 'rango:about' %}">About Rango</a></p>
+
 {% endblock %}

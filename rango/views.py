@@ -6,10 +6,13 @@ from rango.forms import UserForm, UserProfileForm
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
+from datetime import datetime
+
 
 def index(request):
-    category_list = Category.objects.order_by('-likes')[:5]  # Top 5 most liked categories
-    page_list = Page.objects.order_by('-views')[:5]  # Top 5 most viewed pages
+    """Renders the main page with category and page lists."""
+    category_list = Category.objects.order_by('-likes')[:5]
+    page_list = Page.objects.order_by('-views')[:5]
 
     context_dict = {
         'boldmessage': 'Crunchy, creamy, cookie, candy, cupcake!',
@@ -17,10 +20,19 @@ def index(request):
         'pages': page_list
     }
 
+    visitor_cookie_handler(request)  # ✅ Ensures visit count is tracked
+
     return render(request, 'rango/index.html', context=context_dict)
 
 def about(request):
-    return render(request, 'rango/about.html')
+    """Displays visit count in the About page."""
+    visitor_cookie_handler(request)  #  Ensure visits are updated first
+
+    context_dict = {
+        'visits': request.session.get('visits', 1)  #  Retrieve visits
+    }
+
+    return render(request, 'rango/about.html', context=context_dict)
 
 def show_category(request, category_name_slug):
     try:
@@ -38,7 +50,6 @@ def show_category(request, category_name_slug):
 
     return render(request, 'rango/category.html', context=context_dict)
 
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def add_category(request):
@@ -54,6 +65,7 @@ def add_category(request):
             print(form.errors)
 
     return render(request, 'rango/add_category.html', {'form': form})
+
 
 @login_required
 def add_page(request, category_name_slug):
@@ -81,9 +93,9 @@ def add_page(request, category_name_slug):
 
     return render(request, 'rango/add_page.html', {'form': form, 'category': category})
 
+
 def register(request):
     registered = False
-    categories = Category.objects.all()  # Fetch categories
 
     if request.method == 'POST':
         user_form = UserForm(request.POST)
@@ -91,7 +103,7 @@ def register(request):
 
         if user_form.is_valid() and profile_form.is_valid():
             user = user_form.save()
-            user.set_password(user.password)  # Hash password
+            user.set_password(user.password)
             user.save()
 
             profile = profile_form.save(commit=False)
@@ -102,7 +114,7 @@ def register(request):
 
             registered = True
         else:
-            print(user_form.errors, profile_form.errors)  # Debugging errors
+            print(user_form.errors, profile_form.errors)
 
     else:
         user_form = UserForm()
@@ -112,8 +124,8 @@ def register(request):
         'user_form': user_form,
         'profile_form': profile_form,
         'registered': registered,
-        #'categories': categories,  # Pass categories to template
     })
+
 
 def user_login(request):
     if request.method == 'POST':
@@ -133,15 +145,35 @@ def user_login(request):
     else:
         return render(request, 'rango/login.html')
 
+
 @login_required
 def restricted(request):
     return render(request, 'rango/restricted.html')
+
 
 @login_required
 def user_logout(request):
     logout(request)
     return redirect(reverse('rango:index'))
 
-@login_required
-def restricted_view(request):
-    return render(request, 'rango/restricted.html')
+def get_server_side_cookie(request, cookie, default_val=None):
+    val = request.session.get(cookie)
+    if not val:
+        val = default_val
+    return val
+
+#  Updated function - uses session storage (removes `response` parameter)
+def visitor_cookie_handler(request):
+    visits = int(get_server_side_cookie(request, 'visits', '1'))
+    last_visit_cookie = get_server_side_cookie(request, 'last_visit', str(datetime.now()))
+
+    last_visit_time = datetime.strptime(last_visit_cookie[:-7], '%Y-%m-%d %H:%M:%S')
+
+    #  If it's been more than a day since the last visit, increment visits
+    if (datetime.now() - last_visit_time).days > 0:
+        visits += 1
+        request.session['last_visit'] = str(datetime.now())  # Update last visit time
+    else:
+        request.session['last_visit'] = last_visit_cookie  # Keep previous visit time
+
+    request.session['visits'] = visits  # Store visit count in session
