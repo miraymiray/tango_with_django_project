@@ -42,7 +42,7 @@ def populate():
 def add_page(cat, title, url, views=0):
     p, created = Page.objects.get_or_create(category=cat, title=title)
     p.url = url
-    p.views = views  # Assigning views
+    p.views = views
     p.save()
     return p
 

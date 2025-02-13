@@ -3,6 +3,7 @@
 
 {% block body_block %}
 <h1>Rango says...</h1>
+    <p>Visits: {{ visits }}</p>
 <div>
     Here is the about page. <br />
     <strong>{{ boldmessage }}</strong><br />
@@ -14,6 +15,5 @@
 
 <div>
     <img src="{{ MEDIA_URL }}cat.jpg" alt="Picture of a Cat" />
-    <p>Visits: {{ visits }}</p>
 </div>
 {% endblock %}

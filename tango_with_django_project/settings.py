@@ -141,8 +141,8 @@ PASSWORD_HASHERS = [
 'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
 ]
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'  #  Use database-backed sessions
-SESSION_COOKIE_NAME = 'sessionid'  # Default session cookie name
-SESSION_COOKIE_AGE = 1209600  # Sessions last 2 weeks
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Session persists after closing browser
-SESSION_SAVE_EVERY_REQUEST = False  # Don't save session data if it hasn't changed
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_AGE = 1209600
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = False

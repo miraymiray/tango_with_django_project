@@ -33,10 +33,7 @@ class PageForm(forms.ModelForm):
         exclude = ('category',)
 
     def clean(self):
-        """
-        Cleans and validates form data before saving.
-        Ensures that the URL starts with 'http://' or 'https://'.
-        """
+
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
 
